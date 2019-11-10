@@ -1,7 +1,5 @@
-import tester.*
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
-import kotlin.test.fail
 
 
 class Direction(val state: State, val terminal: Char) {
@@ -38,7 +36,7 @@ open class State(val id: Int, val directions: ArrayList<Direction>) {
 
 
 fun main() {
-    val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("libs/graph.jff")
+    val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse("libs/grapho.jff")
     val nodes = doc.documentElement.childNodes.item(3).childNodes
     val states = (0 until nodes.length).flatMap {
         val item = nodes.item(it)
@@ -71,7 +69,7 @@ fun main() {
     }
 
     states.forEach {
-        printGraph(it)
+        printTable(it)
     }
 }
 

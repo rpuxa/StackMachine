@@ -1,5 +1,3 @@
-package tester
-
 const val NUMBER = 'б'
 const val START = 'э'
 const val ID = 'а'
@@ -10,6 +8,7 @@ const val STMT = 'м'
 const val SIMPLE_EXPR = 7815.toChar()
 const val LOG_OPER = 7816.toChar()
 const val EXPR = 7817.toChar()
+const val INTEGER_NUM = 7818.toChar()
 
 
 
@@ -22,7 +21,8 @@ fun main() {
         TERM to "(($ID)+($NUMBER))",
         REL_OPER to "(=+<+<=+<>+>+>=)",
         MATH_OPER to "($PLUS+-+$MULT+/)",
-        NUMBER to "(($PLUS$DIGIT+-$DIGIT+$DIGIT)$DIGIT*(!+.$DIGIT$DIGIT*))",
+        NUMBER to "$INTEGER_NUM(!+.$DIGIT$DIGIT*)(!+e$INTEGER_NUM)",
+        INTEGER_NUM to "(!+$PLUS+-)$DIGIT$DIGIT*",
         ID to "($LETTER$LETTER_OR_DIGIT*)",
         LOG_OPER to "(and+or+xor)",
         '_' to "п*"
