@@ -1,7 +1,6 @@
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
 
-
 class Direction(val state: State, val terminal: Char) {
     override fun toString(): String {
         return "$terminal${state.name}"
@@ -10,7 +9,8 @@ class Direction(val state: State, val terminal: Char) {
 
 open class State(val id: Int, val directions: ArrayList<Direction>) {
 
-    open val name = ('A' + (id % 25)).toString() + ('1' + (id / 25))
+    open val name = if (id == 0) "START" else ('A' + (id % 25)).toString() + ('1' + (id / 25))
+
 
     var finish = false
 
@@ -68,9 +68,11 @@ fun main() {
             to.finish = true
     }
 
-    states.forEach {
-        printTable(it)
-    }
+    states.forEach(::printGraph)
+}
+
+fun printEnum(state: State) {
+    println(state.name + ",")
 }
 
 fun printGraph(state: State) {
@@ -96,11 +98,10 @@ fun printTable(state: State) {
 
 fun printCase(state: State) {
     if (state.finish) {
-        println("case -1: return;")
         return
     }
 
-    println("case ${state.id}:")
+    println("case ${state.name}:")
     for (it in state.directions) {
         val s = when (it.terminal) {
             NEW_LINE -> "symbol=='\\n'"
@@ -113,11 +114,8 @@ fun printCase(state: State) {
             LETTER_OR_DIGIT -> "Character.isLetterOrDigit(symbol)"
             else -> "symbol=='${it.terminal}'"
         }
-        println("if ($s) {")
-        println(if (it.state.id == state.id) "return;" else "state = ${it.state.id};")
-        print("} else ")
+        println("if ($s)")
+        println("return States.${it.state.name};")
     }
-    println("{")
-    println("error = true;")
-    println("} return;")
+    println("break;\n")
 }
