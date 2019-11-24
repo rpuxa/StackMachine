@@ -68,7 +68,7 @@ fun main() {
             to.finish = true
     }
 
-    states.forEach(::printGraph)
+    states.forEach(::printCase)
 }
 
 fun printEnum(state: State) {
@@ -117,5 +117,24 @@ fun printCase(state: State) {
         println("if ($s)")
         println("return States.${it.state.name};")
     }
-    println("break;\n")
+
+    val errors = state.directions.map {
+        when (it.terminal) {
+            NEW_LINE -> "перенос строки"
+            SPACE -> "пробел"
+            END_TERMINAL -> "конец строки"
+            PLUS -> "+"
+            MULT -> "*"
+            DIGIT -> "цифра"
+            LETTER -> "буква"
+            LETTER_OR_DIGIT -> "буква или цифра"
+            else -> it.terminal.toString()
+        }
+    }
+   val answer = if (errors.size == 1)
+        "Ожидался ${errors.first()}"
+    else
+        "Ожидались следующие символы: " + errors.joinToString(", ")
+
+    println("return new Error(\"$answer\");\n")
 }

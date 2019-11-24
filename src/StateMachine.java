@@ -1,7 +1,7 @@
+import kotlin.Pair;
+
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.FileInputStream;
 
 
 public class StateMachine {
@@ -12,7 +12,7 @@ public class StateMachine {
         frame.setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
 
         TextArea textArea = new TextArea("DO WHILE a < b XOR c > d \ne = 1\nloop");
-        Label label = new Label("Подходит");
+        Label label = new Label(Error.NO_ERROR.getMessage());
         textArea.setRows(15);
         textArea.setColumns(200);
 
@@ -26,22 +26,32 @@ public class StateMachine {
                 if (c != '\r') builder.append(Character.toLowerCase(c));
             }
 
-            label.setText(check(builder.toString()) ? "Подходит" : "Не подходит");
+            Pair<Error, Integer> result = check(builder.toString());
+            String message = result.getFirst().getMessage();
+            if (result.getFirst() != Error.NO_ERROR)
+              message  += ". Символ " + result.getSecond();
+            label.setText(message);
         });
 
         frame.setVisible(true);
     }
 
-    private static boolean check(String string) {
+    private static Pair<Error, Integer> check(String string) {
         char[] array = (string + (char) 0).toCharArray();
-        States state = States.START;
-        for (int i = 0; i < array.length && state != States.FINISH && state != States.ERROR; i++) {
-            state = checkSymbol(state, array[i]);
+        MachineAnswer state = States.START;
+        int i = 0;
+        for (; i < array.length && !(state instanceof Error); i++) {
+            state = checkSymbol((States) state, array[i]);
         }
-        return state != States.ERROR;
+        Error error;
+        if (state == States.D3)
+            error = Error.NO_ERROR;
+        else
+            error = (Error) state;
+        return new Pair<>(error, i);
     }
 
-    private static States checkSymbol(States state, char symbol) {
+    private static MachineAnswer checkSymbol(States state, char symbol) {
 
         switch (state) {
             case START:
@@ -51,84 +61,84 @@ public class StateMachine {
                     return States.START;
                 if (symbol == 'd')
                     return States.B1;
-                break;
+                return new Error("Ожидались следующие символы: пробел, перенос строки, d");
 
             case B1:
                 if (symbol == 'o')
                     return States.C1;
-                break;
+                return new Error("Ожидался o");
 
             case C1:
                 if (symbol == ' ')
                     return States.F1;
-                break;
+                return new Error("Ожидался пробел");
 
             case D1:
                 if (symbol == 'o')
                     return States.E1;
-                break;
+                return new Error("Ожидался o");
 
             case E1:
                 if (symbol == 'r')
                     return States.M1;
-                break;
+                return new Error("Ожидался r");
 
             case F1:
                 if (symbol == ' ')
                     return States.F1;
                 if (symbol == 'w')
                     return States.G1;
-                break;
+                return new Error("Ожидались следующие символы: пробел, w");
 
             case G1:
                 if (symbol == 'h')
                     return States.H1;
-                break;
+                return new Error("Ожидался h");
 
             case H1:
                 if (symbol == 'i')
                     return States.I1;
-                break;
+                return new Error("Ожидался i");
 
             case I1:
                 if (symbol == 'l')
                     return States.K1;
-                break;
+                return new Error("Ожидался l");
 
             case J1:
                 if (symbol == 'n')
                     return States.L1;
-                break;
+                return new Error("Ожидался n");
 
             case K1:
                 if (symbol == 'e')
                     return States.M1;
-                break;
+                return new Error("Ожидался e");
 
             case L1:
                 if (symbol == 'd')
                     return States.M1;
-                break;
+                return new Error("Ожидался d");
 
             case M1:
                 if (symbol == ' ')
                     return States.V1;
-                break;
+                return new Error("Ожидался пробел");
 
             case N1:
                 if (Character.isDigit(symbol))
                     return States.Y1;
-                break;
+                return new Error("Ожидался цифра");
 
             case O1:
                 if (Character.isDigit(symbol))
                     return States.A2;
-                break;
+                return new Error("Ожидался цифра");
 
             case P1:
                 if (Character.isDigit(symbol))
                     return States.B2;
-                break;
+                return new Error("Ожидался цифра");
 
             case Q1:
                 if (symbol == '+')
@@ -137,22 +147,22 @@ public class StateMachine {
                     return States.N1;
                 if (Character.isDigit(symbol))
                     return States.Y1;
-                break;
+                return new Error("Ожидались следующие символы: символ +, -, цифра");
 
             case R1:
                 if (Character.isDigit(symbol))
                     return States.G2;
-                break;
+                return new Error("Ожидался цифра");
 
             case S1:
                 if (Character.isDigit(symbol))
                     return States.I2;
-                break;
+                return new Error("Ожидался цифра");
 
             case T1:
                 if (Character.isDigit(symbol))
                     return States.J2;
-                break;
+                return new Error("Ожидался цифра");
 
             case U1:
                 if (Character.isDigit(symbol))
@@ -161,7 +171,7 @@ public class StateMachine {
                     return States.R1;
                 if (symbol == '-')
                     return States.R1;
-                break;
+                return new Error("Ожидались следующие символы: цифра, символ +, -");
 
             case V1:
                 if (Character.isLetter(symbol))
@@ -174,7 +184,7 @@ public class StateMachine {
                     return States.V1;
                 if (symbol == '-')
                     return States.P1;
-                break;
+                return new Error("Ожидались следующие символы: буква, цифра, символ +, пробел, -");
 
             case W1:
                 if (symbol == '=')
@@ -185,7 +195,7 @@ public class StateMachine {
                     return States.D2;
                 if (symbol == '<')
                     return States.E2;
-                break;
+                return new Error("Ожидались следующие символы: =, пробел, >, <");
 
             case X1:
                 if (symbol == '>')
@@ -198,7 +208,7 @@ public class StateMachine {
                     return States.W1;
                 if (symbol == '=')
                     return States.C2;
-                break;
+                return new Error("Ожидались следующие символы: >, буква или цифра, <, пробел, =");
 
             case Y1:
                 if (symbol == '>')
@@ -211,7 +221,7 @@ public class StateMachine {
                     return States.W1;
                 if (symbol == '=')
                     return States.C2;
-                break;
+                return new Error("Ожидались следующие символы: >, цифра, <, пробел, =");
 
             case A2:
                 if (Character.isDigit(symbol))
@@ -226,7 +236,7 @@ public class StateMachine {
                     return States.D2;
                 if (symbol == 'e')
                     return States.Q1;
-                break;
+                return new Error("Ожидались следующие символы: цифра, пробел, =, <, >, e");
 
             case B2:
                 if (symbol == 'e')
@@ -243,7 +253,7 @@ public class StateMachine {
                     return States.C2;
                 if (symbol == '.')
                     return States.O1;
-                break;
+                return new Error("Ожидались следующие символы: e, >, цифра, <, пробел, =, .");
 
             case C2:
                 if (symbol == '-')
@@ -256,7 +266,7 @@ public class StateMachine {
                     return States.J2;
                 if (symbol == '+')
                     return States.T1;
-                break;
+                return new Error("Ожидались следующие символы: -, пробел, буква, цифра, символ +");
 
             case D2:
                 if (symbol == '=')
@@ -271,7 +281,7 @@ public class StateMachine {
                     return States.J2;
                 if (Character.isLetter(symbol))
                     return States.F2;
-                break;
+                return new Error("Ожидались следующие символы: =, пробел, -, символ +, цифра, буква");
 
             case E2:
                 if (Character.isLetter(symbol))
@@ -288,7 +298,7 @@ public class StateMachine {
                     return States.C2;
                 if (symbol == '>')
                     return States.C2;
-                break;
+                return new Error("Ожидались следующие символы: буква, цифра, символ +, -, =, пробел, >");
 
             case F2:
                 if (Character.isLetterOrDigit(symbol))
@@ -297,7 +307,7 @@ public class StateMachine {
                     return States.H2;
                 if (symbol == '\n')
                     return States.O2;
-                break;
+                return new Error("Ожидались следующие символы: буква или цифра, пробел, перенос строки");
 
             case G2:
                 if (symbol == '\n')
@@ -306,7 +316,7 @@ public class StateMachine {
                     return States.G2;
                 if (symbol == ' ')
                     return States.H2;
-                break;
+                return new Error("Ожидались следующие символы: перенос строки, цифра, пробел");
 
             case H2:
                 if (symbol == 'o')
@@ -319,7 +329,7 @@ public class StateMachine {
                     return States.J1;
                 if (symbol == '\n')
                     return States.O2;
-                break;
+                return new Error("Ожидались следующие символы: o, пробел, x, a, перенос строки");
 
             case I2:
                 if (Character.isDigit(symbol))
@@ -330,7 +340,7 @@ public class StateMachine {
                     return States.O2;
                 if (symbol == ' ')
                     return States.H2;
-                break;
+                return new Error("Ожидались следующие символы: цифра, e, перенос строки, пробел");
 
             case J2:
                 if (Character.isDigit(symbol))
@@ -343,22 +353,22 @@ public class StateMachine {
                     return States.U1;
                 if (symbol == '\n')
                     return States.O2;
-                break;
+                return new Error("Ожидались следующие символы: цифра, ., пробел, e, перенос строки");
 
             case K2:
                 if (Character.isDigit(symbol))
                     return States.U2;
-                break;
+                return new Error("Ожидался цифра");
 
             case L2:
                 if (Character.isDigit(symbol))
                     return States.V2;
-                break;
+                return new Error("Ожидался цифра");
 
             case M2:
                 if (Character.isDigit(symbol))
                     return States.W2;
-                break;
+                return new Error("Ожидался цифра");
 
             case N2:
                 if (Character.isDigit(symbol))
@@ -367,21 +377,21 @@ public class StateMachine {
                     return States.K2;
                 if (symbol == '-')
                     return States.K2;
-                break;
+                return new Error("Ожидались следующие символы: цифра, символ +, -");
 
             case O2:
                 if (symbol == ' ')
                     return States.O2;
                 if (Character.isLetter(symbol))
                     return States.Q2;
-                break;
+                return new Error("Ожидались следующие символы: пробел, буква");
 
             case P2:
                 if (symbol == ' ')
                     return States.P2;
                 if (symbol == '=')
                     return States.R2;
-                break;
+                return new Error("Ожидались следующие символы: пробел, =");
 
             case Q2:
                 if (Character.isLetterOrDigit(symbol))
@@ -390,7 +400,7 @@ public class StateMachine {
                     return States.P2;
                 if (symbol == '=')
                     return States.R2;
-                break;
+                return new Error("Ожидались следующие символы: буква или цифра, пробел, =");
 
             case R2:
                 if (symbol == ' ')
@@ -403,7 +413,7 @@ public class StateMachine {
                     return States.T2;
                 if (symbol == '+')
                     return States.M2;
-                break;
+                return new Error("Ожидались следующие символы: пробел, цифра, -, буква, символ +");
 
             case S2:
                 if (symbol == '+')
@@ -418,7 +428,7 @@ public class StateMachine {
                     return States.R2;
                 if (symbol == '\n')
                     return States.X2;
-                break;
+                return new Error("Ожидались следующие символы: символ +, символ *, пробел, -, /, перенос строки");
 
             case T2:
                 if (Character.isLetterOrDigit(symbol))
@@ -435,7 +445,7 @@ public class StateMachine {
                     return States.R2;
                 if (symbol == '-')
                     return States.R2;
-                break;
+                return new Error("Ожидались следующие символы: буква или цифра, перенос строки, символ +, пробел, символ *, /, -");
 
             case U2:
                 if (symbol == '+')
@@ -452,7 +462,7 @@ public class StateMachine {
                     return States.R2;
                 if (symbol == '\n')
                     return States.X2;
-                break;
+                return new Error("Ожидались следующие символы: символ +, символ *, пробел, цифра, -, /, перенос строки");
 
             case V2:
                 if (Character.isDigit(symbol))
@@ -461,9 +471,7 @@ public class StateMachine {
                     return States.X2;
                 if (symbol == ' ')
                     return States.S2;
-                if (symbol == '*')
-                    return States.R2;
-                if (symbol == '+')
+                if (symbol == '*'||symbol == '+')
                     return States.R2;
                 if (symbol == 'e')
                     return States.N2;
@@ -471,7 +479,7 @@ public class StateMachine {
                     return States.R2;
                 if (symbol == '-')
                     return States.R2;
-                break;
+                return new Error("Ожидались следующие символы: цифра, перенос строки, пробел, символ *, символ +, e, /, -");
 
             case W2:
                 if (symbol == '*')
@@ -492,29 +500,29 @@ public class StateMachine {
                     return States.L2;
                 if (symbol == '\n')
                     return States.X2;
-                break;
+                return new Error("Ожидались следующие символы: символ *, пробел, цифра, символ +, e, -, /, ., перенос строки");
 
             case X2:
                 if (symbol == 'l')
                     return States.Y2;
                 if (symbol == ' ')
                     return States.X2;
-                break;
+                return new Error("Ожидались следующие символы: l, пробел");
 
             case Y2:
                 if (symbol == 'o')
                     return States.A3;
-                break;
+                return new Error("Ожидался o");
 
             case A3:
                 if (symbol == 'o')
                     return States.B3;
-                break;
+                return new Error("Ожидался o");
 
             case B3:
                 if (symbol == 'p')
                     return States.C3;
-                break;
+                return new Error("Ожидался p");
 
             case C3:
                 if (symbol == '\n')
@@ -523,15 +531,30 @@ public class StateMachine {
                     return States.C3;
                 if (symbol == 0)
                     return States.D3;
-                break;
+                return new Error("Ожидались следующие символы: перенос строки, пробел, конец строки");
         }
-        return States.ERROR;
+        throw new RuntimeException("Что то пошло не так");
     }
 
-    private enum States {
+    interface MachineAnswer {
+    }
+
+    private static class Error implements MachineAnswer {
+        static final Error NO_ERROR = new Error("Строка подходит");
+
+        private String message;
+
+        public Error(String message) {
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+    }
+
+    private enum States implements MachineAnswer {
         START,
-        ERROR,
-        FINISH,
         B1,
         C1,
         D1,
