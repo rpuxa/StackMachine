@@ -1,3 +1,4 @@
+import java.lang.StringBuilder
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
 
@@ -102,21 +103,29 @@ fun printCase(state: State) {
     }
 
     println("case ${state.name}:")
-    for (it in state.directions) {
-        val s = when (it.terminal) {
-            NEW_LINE -> "symbol=='\\n'"
-            SPACE -> "symbol==' '"
-            END_TERMINAL -> "symbol==0"
-            PLUS -> "symbol=='+'"
-            MULT -> "symbol=='*'"
-            DIGIT -> "Character.isDigit(symbol)"
-            LETTER -> "Character.isLetter(symbol)"
-            LETTER_OR_DIGIT -> "Character.isLetterOrDigit(symbol)"
-            else -> "symbol=='${it.terminal}'"
+
+
+    val r = state.directions
+        .groupBy { it.state.name }
+        .map { (k, v) ->
+            v.joinToString(" || ") {
+                when (it.terminal) {
+                    NEW_LINE -> "symbol=='\\n'"
+                    SPACE -> "symbol==' '"
+                    END_TERMINAL -> "symbol==0"
+                    PLUS -> "symbol=='+'"
+                    MULT -> "symbol=='*'"
+                    DIGIT -> "Character.isDigit(symbol)"
+                    LETTER -> "Character.isLetter(symbol)"
+                    LETTER_OR_DIGIT -> "Character.isLetterOrDigit(symbol)"
+                    else -> "symbol=='${it.terminal}'"
+                }
+            } to k
+        }.joinToString("\n else ") { (string, name) ->
+            "if ($string) { state = States.${name}; }"
         }
-        println("if ($s)")
-        println("return States.${it.state.name};")
-    }
+
+    println(r)
 
     val errors = state.directions.map {
         when (it.terminal) {
@@ -131,10 +140,6 @@ fun printCase(state: State) {
             else -> it.terminal.toString()
         }
     }
-   val answer = if (errors.size == 1)
-        "Ожидался ${errors.first()}"
-    else
-        "Ожидались следующие символы: " + errors.joinToString(", ")
 
-    println("return new Error(\"$answer\");\n")
+    println("else { error = new Error(\"Ожидались следующие символы: ${errors.joinToString(", ")}\"); }\nbreak;\n")
 }
